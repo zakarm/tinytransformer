@@ -3,8 +3,6 @@
 #include <cstdio>
 
 Matrix transpose(const Matrix& A) {
-    // result has A[0].size() rows and A.size() cols
-    // element [i][j] of result = element [j][i] of A
     std::vector<std::vector<double>> result(A[0].size(), std::vector<double>(A.size()));
     for (size_t i = 0; i < A.size(); i++) {
         for (size_t j = 0; j < A[i].size(); j++) {
@@ -15,14 +13,12 @@ Matrix transpose(const Matrix& A) {
 }
 
 Matrix matmul(const Matrix& A, const Matrix& B) {
-    int rows  = A.size();
-    int cols  = B[0].size();
-    int inner = B.size();
+    size_t rows  = A.size();
+    size_t cols  = B[0].size();
+    size_t inner = B.size();
 
     Matrix result(rows, std::vector<double>(cols, 0.0));
 
-    // i → rows, j → cols, k → inner
-    // result[i][j] += A[i][k] * B[k][j]
     for (size_t i = 0; i < rows; i++){
         for (size_t j = 0; j < cols; j++){
             for (size_t k = 0; k < inner; k++){
@@ -34,7 +30,16 @@ Matrix matmul(const Matrix& A, const Matrix& B) {
     return result;
 }
 
-Matrix scale(const Matrix& A, double s)          { return {}; }
+Matrix scale(const Matrix& A, double s)
+{
+    std::vector<std::vector<double>> result(A.size(), std::vector<double>(A[0].size()));
+    for (size_t i = 0; i < A.size(); i++){
+        for (size_t j = 0; j < A[i].size(); j++){
+            result[i][j] = A[i][j] * s;
+        }
+    }
+    return result;
+}
 
 void print_matrix(const std::string& name, const Matrix& M) {
     std::cout << name << ":\n";

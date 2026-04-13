@@ -1,48 +1,50 @@
 #include "include/matrix.hpp"
-#include <cmath>
+#include "include/attention.hpp"
 #include <iostream>
 
 int main() {
     // -----------------------------------------------------------------
-    // Attention score: scores = Q * K^T / sqrt(d_k)
+    // Full self-attention: Attention(Q, K, V) = softmax(Q*K^T/sqrt(d_k)) * V
     //
-    // 3 tokens, d_k = 4  (each row = one token's query / key vector)
+    // 3 tokens, d_k = d_v = 4
     // -----------------------------------------------------------------
-    int d_k = 4;
 
     Matrix Q = {
-        {1, 0, 1, 0},   // token 0
-        {0, 1, 0, 1},   // token 1
-        {1, 1, 0, 0},   // token 2
+        {1, 0, 1, 0},
+        {0, 1, 0, 1},
+        {1, 1, 0, 0},
     };
 
     Matrix K = {
-        {1, 0, 1, 0},   // token 0
-        {0, 1, 0, 1},   // token 1
-        {1, 1, 0, 0},   // token 2
+        {1, 0, 1, 0},
+        {0, 1, 0, 1},
+        {1, 1, 0, 0},
     };
 
-    print_matrix("Q (3 tokens, d_k=4)", Q);
-    print_matrix("K (3 tokens, d_k=4)", K);
+    Matrix V = {
+        {1, 2, 3, 4},   // value for token 0
+        {5, 6, 7, 8},   // value for token 1
+        {9, 8, 7, 6},   // value for token 2
+    };
 
-    // step 1: Q * K^T  →  raw dot-products between every pair of tokens
-    Matrix Kt     = transpose(K);
-    Matrix scores = matmul(Q, Kt);
-    print_matrix("Q * K^T  (raw scores, 3x3)", scores);
+    print_matrix("Q", Q);
+    print_matrix("K", K);
+    print_matrix("V", V);
 
-    // step 2: scale by 1/sqrt(d_k)  — needs scale() to be implemented
-    // scores /= sqrt(d_k)
-    Matrix scaled = scale(scores, 1.0 / std::sqrt(d_k));
-    if (scaled.empty()) {
-        std::cout << "scaled scores: scale() not yet implemented\n";
-        std::cout << "(expected each value above divided by sqrt(" << d_k
-                  << ") = " << std::sqrt(d_k) << ")\n\n";
-    } else {
-        print_matrix("Q * K^T / sqrt(d_k)  (scaled scores, 3x3)", scaled);
-    }
+    Matrix scores = matmul(Q, transpose(K));
+    print_matrix("Q * K^T  (raw scores)", scores);
 
-    // next step after scale: softmax row-wise → attention weights
-    // next step after that:  weights * V       → attended output
+    Matrix scaled = scale(scores, 1.0 / 2.0);   // sqrt(d_k=4) = 2
+    print_matrix("scaled  (/ sqrt(d_k))", scaled);
+
+    Matrix weights = softmax(scaled);
+    print_matrix("softmax (attention weights)", weights);
+
+    Matrix out = matmul(weights, V);
+    print_matrix("output  (weights * V)", out);
+
+    std::cout << "--- full attention() call ---\n\n";
+    print_matrix("attention(Q, K, V)", attention(Q, K, V));
 
     return 0;
 }
