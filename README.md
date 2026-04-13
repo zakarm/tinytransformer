@@ -10,12 +10,12 @@ The goal is to implement every piece of the transformer architecture by hand, st
 
 ```
 Input
-  └── Matrix ops (matmul, transpose, scale)
-        └── Attention scores: Q * K^T / sqrt(d_k)
-              └── Softmax  →  Attention weights
-                    └── weights * V  →  Attended output
-                          └── Multi-head attention
-                                └── Feed-forward block
+  └── Matrix ops (matmul, transpose, scale)       ✅
+        └── Attention scores: Q * K^T / sqrt(d_k) ✅
+              └── Softmax  →  Attention weights    ✅
+                    └── weights * V  →  Output     ✅
+                          └── Multi-head attention 🔧
+                                └── Feed-forward  🔧
 ```
 
 ---
@@ -26,9 +26,9 @@ Input
 |---|---|---|
 | Matrix multiply | `src/matrix.cpp` | ✅ done |
 | Transpose | `src/matrix.cpp` | ✅ done |
-| Scale | `src/matrix.cpp` | 🔧 todo |
-| Softmax | — | 🔧 todo |
-| Single-head attention | `src/attention.cpp` | 🔧 todo |
+| Scale | `src/matrix.cpp` | ✅ done |
+| Softmax | `src/attention.cpp` | ✅ done |
+| Single-head attention | `src/attention.cpp` | ✅ done |
 | Multi-head attention | `src/multi_head.cpp` | 🔧 todo |
 | Feed-forward block | `src/feedforward.cpp` | 🔧 todo |
 
@@ -51,16 +51,21 @@ Requires a C++17 compiler (`g++` or `clang++`).
 ./tinytransformer
 ```
 
-Current output demos the attention score computation `Q * K^T / sqrt(d_k)` with 3 tokens of dimension 4:
+Current output runs the full single-head attention — `Attention(Q, K, V) = softmax(Q * K^T / sqrt(d_k)) * V` — with 3 tokens of dimension 4:
 
 ```
-Q * K^T  (raw scores, 3x3):
-  2.000   0.000   1.000
-  0.000   2.000   1.000
-  1.000   1.000   2.000
+softmax (attention weights):
+  0.506   0.186   0.307
+  0.186   0.506   0.307
+  0.274   0.274   0.452
+
+output  (weights * V):
+  4.203   4.588   4.974   5.360
+  5.483   5.869   6.255   6.640
+  5.711   5.807   5.904   6.000
 ```
 
-Each entry `[i][j]` is the dot-product between token `i`'s query and token `j`'s key — how much token `i` should attend to token `j`.
+Each row of the output is a weighted blend of the value vectors — tokens attend mostly to themselves, with some weight on similar tokens.
 
 ---
 
