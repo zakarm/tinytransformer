@@ -2,7 +2,7 @@
 
 A learning project — building a transformer from scratch in C++, step by step.
 
-The goal is to implement every piece of the transformer architecture by hand, starting from basic matrix operations up to multi-head attention and a feed-forward block.
+The goal is to implement every piece of the transformer architecture by hand, starting from basic matrix operations up to multi-head attention, a feed-forward block, and a KV cache for autoregressive decoding.
 
 ---
 
@@ -16,6 +16,7 @@ Input
                     └── weights * V  →  Output     ✅
                           └── Multi-head attention ✅
                                 └── Feed-forward  ✅
+                                      └── KV Cache ✅
 ```
 
 ---
@@ -33,6 +34,7 @@ Input
 | Feed-forward + ReLU | `src/feedforward.cpp` | ✅ done |
 | Layer norm | `src/feedforward.cpp` | ✅ done |
 | Residual connections | `main.cpp` | ✅ done |
+| KV Cache | `src/kv_cache.cpp` | ✅ done |
 
 ---
 
@@ -53,15 +55,13 @@ Requires a C++17 compiler (`g++` or `clang++`).
 ./tinytransformer
 ```
 
-Runs a full transformer block on 4 tokens (`"The cat sat down"`) with `d_model=8`, 2 attention heads:
+The demo has two parts:
+
+### Part 1 — full transformer block
+
+All 4 tokens processed at once (`"The cat sat down"`, `d_model=8`, 2 heads):
 
 ```
-Input X  (4 tokens x d_model=8):
-  0.900   0.100   0.400   0.800   0.300   0.600   0.200   0.700
-  0.500   0.800   0.200   0.600   0.900   0.100   0.700   0.300
-  0.300   0.600   0.900   0.200   0.700   0.400   0.800   0.100
-  0.700   0.300   0.600   0.500   0.100   0.900   0.400   0.800
-
 After add & norm (2)  →  transformer block output:
   1.861  -1.190  -0.576   1.073  -0.800   0.101  -0.896   0.428
  -0.076   0.753  -1.029   0.091   1.773  -1.289   0.764  -0.986
@@ -69,17 +69,34 @@ After add & norm (2)  →  transformer block output:
   0.926  -0.991  -0.061  -0.463  -1.327   1.652  -0.708   0.973
 ```
 
-Each token starts as a raw embedding — the output is a contextualised representation where every token has mixed in information from the others via attention.
-
-### Block pipeline
-
 ```
 x  ──► MultiHeadAttention(Q=x, K=x, V=x)
-         └─ split into h heads, attention per head, concat
-    ──► Add & LayerNorm   (residual connection)
+    ──► Add & LayerNorm   (residual)
     ──► FeedForward       (linear → ReLU → linear)
-    ──► Add & LayerNorm   (residual connection)
+    ──► Add & LayerNorm   (residual)
     ──► output
+```
+
+### Part 2 — KV cache (autoregressive decoding)
+
+Same sentence, but tokens arrive one at a time — each new token attends to all previous ones stored in the cache:
+
+```
+--- step 0:  "The"   (attends to 1 token)
+--- step 1:  "cat"   (attends to 2 tokens)
+--- step 2:  "sat"   (attends to 3 tokens)
+--- step 3:  "down"  (attends to 4 tokens)
+```
+
+The output at step 3 matches row 3 of Part 1 exactly — proving the cache is correct.
+
+```
+Q (current token) ──► MultiHeadAttention(Q, K_cache, V_cache)
+                  ──► Add & LayerNorm
+                  ──► FeedForward
+                  ──► Add & LayerNorm
+                  ──► output
+         cache.update(K, V) on every step
 ```
 
 ---
@@ -92,13 +109,15 @@ tinytransformer/
 │   ├── matrix.hpp       # Matrix type + ops
 │   ├── attention.hpp    # softmax, single-head attention
 │   ├── multi_head.hpp   # MultiHeadAttention struct
-│   └── feedforward.hpp  # relu, layer_norm, feedforward
+│   ├── feedforward.hpp  # relu, layer_norm, feedforward
+│   └── kv_cache.hpp     # KVCache struct
 ├── src/
 │   ├── matrix.cpp
 │   ├── attention.cpp
 │   ├── multi_head.cpp
-│   └── feedforward.cpp
-├── main.cpp             # end-to-end transformer block demo
+│   ├── feedforward.cpp
+│   └── kv_cache.cpp
+├── main.cpp             # end-to-end demo (block + KV cache)
 └── Makefile
 ```
 
