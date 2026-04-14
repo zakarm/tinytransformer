@@ -1,5 +1,5 @@
-# include "./include/feedforward.hpp"
-# include <numeric>
+#include "./include/feedforward.hpp"
+#include <numeric>
 
 Matrix relu(const Matrix& X){
     Matrix result = X;

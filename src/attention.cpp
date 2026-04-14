@@ -1,7 +1,7 @@
-# include "include/attention.hpp"
-# include <cmath>
-# include <algorithm>
-# include <numeric>
+#include "include/attention.hpp"
+#include <cmath>
+#include <algorithm>
+#include <numeric>
 
 Matrix softmax(const Matrix& A) {
     Matrix result = A;

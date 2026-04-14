@@ -20,7 +20,6 @@ lib: $(BUILD_DIR) $(LIB)
 $(LIB): $(OBJS)
 	ar rcs $@ $^
 
-# Build executable if main.cpp is present
 $(TARGET): $(MAIN_SRC) $(LIB)
 	$(CXX) $(CXXFLAGS) $< -L. -ltinytransformer -o $@
 
