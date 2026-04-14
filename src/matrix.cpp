@@ -26,7 +26,6 @@ Matrix matmul(const Matrix& A, const Matrix& B) {
             }
         }
     }
-
     return result;
 }
 

@@ -16,7 +16,6 @@ Matrix softmax(const Matrix& A) {
         std::transform(row->begin(), row->end(), row->begin(),
                [sum](double c) { return c / sum; });
     }
-
     return result;
 }
 
