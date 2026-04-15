@@ -9,14 +9,15 @@ The goal is to implement every piece of the transformer architecture by hand, st
 ## Architecture
 
 ```
-Input
-  └── Matrix ops (matmul, transpose, scale)       ✅
-        └── Attention scores: Q * K^T / sqrt(d_k) ✅
-              └── Softmax  →  Attention weights    ✅
-                    └── weights * V  →  Output     ✅
-                          └── Multi-head attention ✅
-                                └── Feed-forward  ✅
-                                      └── KV Cache ✅
+Input embeddings
+  └── Positional encoding                         ✅
+        └── Matrix ops (matmul, transpose, scale) ✅
+              └── Q * K^T / sqrt(d_k)             ✅
+                    └── Softmax → weights          ✅
+                          └── weights * V          ✅
+                                └── Multi-head    ✅
+                                      └── FFN     ✅
+                                            └── KV Cache ✅
 ```
 
 ---
@@ -35,6 +36,7 @@ Input
 | Layer norm | `src/feedforward.cpp` | ✅ done |
 | Residual connections | `main.cpp` | ✅ done |
 | KV Cache | `src/kv_cache.cpp` | ✅ done |
+| Positional encoding | `src/positional_encoding.cpp` | ✅ done |
 
 ---
 
@@ -62,15 +64,22 @@ The demo has two parts:
 All 4 tokens processed at once (`"The cat sat down"`, `d_model=8`, 2 heads):
 
 ```
+After positional encoding:
+  0.900   1.100   0.400   1.800   0.300   1.600   0.200   1.700
+  1.341   1.340   0.300   1.595   0.910   1.100   0.701   1.300
+  1.209   0.184   1.099   1.180   0.720   1.400   0.802   1.100
+  0.841  -0.690   0.896   1.455   0.130   1.900   0.403   1.800
+
 After add & norm (2)  →  transformer block output:
-  1.861  -1.190  -0.576   1.073  -0.800   0.101  -0.896   0.428
- -0.076   0.753  -1.029   0.091   1.773  -1.289   0.764  -0.986
- -0.624  -0.181   1.675  -0.929   0.675  -0.647   1.248  -1.216
-  0.926  -0.991  -0.061  -0.463  -1.327   1.652  -0.708   0.973
+ -0.396  -0.420  -0.908   1.380  -1.012   1.147  -1.031   1.239
+  0.271  -0.151  -1.328   1.698  -0.950   0.588  -1.064   0.936
+  0.259  -1.282  -0.578   1.020  -0.968   1.551  -0.887   0.885
+ -0.299  -1.255  -0.461   0.841  -0.896   1.489  -0.764   1.345
 ```
 
 ```
-x  ──► MultiHeadAttention(Q=x, K=x, V=x)
+x  ──► PositionalEncoding
+    ──► MultiHeadAttention(Q=x, K=x, V=x)
     ──► Add & LayerNorm   (residual)
     ──► FeedForward       (linear → ReLU → linear)
     ──► Add & LayerNorm   (residual)
@@ -106,17 +115,19 @@ Q (current token) ──► MultiHeadAttention(Q, K_cache, V_cache)
 ```
 tinytransformer/
 ├── include/
-│   ├── matrix.hpp       # Matrix type + ops
-│   ├── attention.hpp    # softmax, single-head attention
-│   ├── multi_head.hpp   # MultiHeadAttention struct
-│   ├── feedforward.hpp  # relu, layer_norm, feedforward
-│   └── kv_cache.hpp     # KVCache struct
+│   ├── matrix.hpp              # Matrix type + ops
+│   ├── attention.hpp           # softmax, single-head attention
+│   ├── multi_head.hpp          # MultiHeadAttention struct
+│   ├── feedforward.hpp         # relu, layer_norm, feedforward
+│   ├── kv_cache.hpp            # KVCache struct
+│   └── positional_encoding.hpp # sinusoidal positional encoding
 ├── src/
 │   ├── matrix.cpp
 │   ├── attention.cpp
 │   ├── multi_head.cpp
 │   ├── feedforward.cpp
-│   └── kv_cache.cpp
+│   ├── kv_cache.cpp
+│   └── positional_encoding.cpp
 ├── main.cpp             # end-to-end demo (block + KV cache)
 └── Makefile
 ```
