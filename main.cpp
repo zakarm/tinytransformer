@@ -1,3 +1,4 @@
+#include "include/positional_encoding.hpp"
 #include "include/multi_head.hpp"
 #include "include/feedforward.hpp"
 #include "include/kv_cache.hpp"
@@ -38,10 +39,14 @@ int main() {
 
     print_matrix("Input X  (4 tokens x d_model=8)", X);
 
-    Matrix attn_out = mha.forward(X, X, X);
+    // --- step 0: positional encoding ---
+    Matrix X_pe = add_positional_encoding(X);
+    print_matrix("After positional encoding", X_pe);
+
+    Matrix attn_out = mha.forward(X_pe, X_pe, X_pe);
     print_matrix("After multi-head attention", attn_out);
 
-    Matrix norm1 = layer_norm(add(attn_out, X));
+    Matrix norm1 = layer_norm(add(attn_out, X_pe));
     print_matrix("After add & norm (1)", norm1);
 
     Matrix ff_out = feedforward(norm1, W1, W2);
